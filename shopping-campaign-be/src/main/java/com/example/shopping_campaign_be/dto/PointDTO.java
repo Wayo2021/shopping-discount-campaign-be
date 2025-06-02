@@ -5,9 +5,9 @@ import lombok.Data;
 @Data
 public class PointDTO {
 
-    private Long id;
-    private int points_spent;
-    private int points_balance;
+    private String id;
+    private String pointsSpent;
+    private String pointsBalance;
     private String user_id;
 
 }

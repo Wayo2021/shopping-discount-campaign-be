@@ -1,11 +1,9 @@
-package com.example.shopping_campaign_be.model;
+package com.example.shopping_campaign_be.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.math.BigDecimal;
 
 @Entity
 @Data
@@ -16,13 +14,15 @@ public class Product {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
     private String name;
 
-    private BigDecimal price; // ใช้ BigDecimal สำหรับราคาเพื่อความแม่นยำ
+    private String price;
 
-    private String category_id;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category category;
 
 //    @ManyToOne(fetch = FetchType.LAZY) // สินค้าอาจมีส่วนลดได้หลายแบบ หรือไม่มีเลยก็ได้
 //    @JoinColumn(name = "discount_id") // Optional: ถ้าต้องการให้สินค้ามีส่วนลดโดยตรง

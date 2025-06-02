@@ -1,7 +1,6 @@
-package com.example.shopping_campaign_be.model;
+package com.example.shopping_campaign_be.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,6 +12,10 @@ import lombok.NoArgsConstructor;
 @Table(name = "categories")
 public class Category {
 
-    private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private String id;
+
     private String name;
+
 }
