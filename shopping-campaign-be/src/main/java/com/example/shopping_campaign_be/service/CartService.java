@@ -11,4 +11,6 @@ public interface CartService {
     Optional<Cart> saveCart(CartDTO cartParam);
     List<Cart> getCartAll();
     Optional<Cart> getCartById(String id);
+    Cart initCart(CartDTO cartParam);
+    Optional<Cart> cartCalculate(CartDTO cartParam);
 }
