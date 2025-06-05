@@ -2,9 +2,12 @@ package com.example.shopping_campaign_be.service.impl;
 
 import com.example.shopping_campaign_be.constant.DiscountConstants;
 import com.example.shopping_campaign_be.dto.CartDTO;
+import com.example.shopping_campaign_be.dto.order.request.CartRequestParam;
+import com.example.shopping_campaign_be.dto.order.request.RequestParam;
 import com.example.shopping_campaign_be.entity.*;
 import com.example.shopping_campaign_be.repository.*;
 import com.example.shopping_campaign_be.service.CartService;
+import com.example.shopping_campaign_be.util.GsonUtil;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -34,28 +37,26 @@ public class CartServiceImpl implements CartService {
     CategoryRepository categoryRepository;
 
     @Override
-    public Cart initCart(CartDTO cartParam) {
+    public Cart initCart(RequestParam param) {
 
-        if (cartParam == null) {
+        if (param == null) {
             throw new IllegalArgumentException("CartDTO cannot be null");
         }
 
+        CartDTO cartDTO = GsonUtil.fromJson(String.valueOf(param.getCartDTO()), CartDTO.class);
+
         Cart cartObj = new Cart();
 
-        String product_id = cartParam.getProduct_id();
-        String discount_id = cartParam.getDiscount_id();
-        String user_id = cartParam.getUser_id();
+        Optional<Product> productOpt = productRepository.findById(cartDTO.getProduct_id());
+        Product productObj = productOpt.orElseThrow(() -> new EntityNotFoundException("Product ID " + cartDTO.getProduct_id() + " not found."));
 
-        Optional<Product> productOpt = productRepository.findById(product_id);
-        Product productObj = productOpt.orElseThrow(() -> new EntityNotFoundException("Product ID " + product_id + " not found."));
+        Optional<Discount> discountOpt = discountRepository.findById(cartDTO.getDiscount_id());
+        Discount discountObj = discountOpt.orElseThrow(() -> new EntityNotFoundException("Discount ID " + cartDTO.getDiscount_id() + " not found."));
 
-        Optional<Discount> discountOpt = discountRepository.findById(discount_id);
-        Discount discountObj = discountOpt.orElseThrow(() -> new EntityNotFoundException("Discount ID " + discount_id + " not found."));
+        Optional<User> userOpt = userRepository.findById(cartDTO.getUser_id());
+        User userObj = userOpt.orElseThrow(() -> new EntityNotFoundException("User ID " + cartDTO.getUser_id() + " not found."));
 
-        Optional<User> userOpt = userRepository.findById(user_id);
-        User userObj = userOpt.orElseThrow(() -> new EntityNotFoundException("User ID " + user_id + " not found."));
-
-        cartObj.setQuantity(cartParam.getQuantity());
+        cartObj.setQuantity(GsonUtil.toJson(cartDTO.getQuantity()));
         cartObj.setProduct(productObj);
         cartObj.setDiscount(discountObj);
         cartObj.setUser(userObj);
@@ -118,28 +119,25 @@ public class CartServiceImpl implements CartService {
         return cartId;
     }
 
-    @Override
-    public Optional<Cart> cartCalculate(CartDTO cartParam) {
+    public CartRequestParam cartCalculate(RequestParam param) {
 
-        if (cartParam == null) {
+        CartRequestParam cartRequestParam = new CartRequestParam();
+
+        if (param == null) {
             throw new IllegalArgumentException("CartDTO cannot be null");
         }
 
-        String product_id = cartParam.getProduct_id();
-        String discount_id = cartParam.getDiscount_id();
-        String user_id = cartParam.getUser_id();
+        CartDTO cartDTO = GsonUtil.fromJson(String.valueOf(param.getCartDTO()), CartDTO.class);
 
-        Optional<Product> productOpt = productRepository.findById(product_id);
-        Product productObj = productOpt.orElseThrow(() -> new EntityNotFoundException("Product ID " + product_id + " not found."));
 
-        Optional<Category> categoryOpt = categoryRepository.findById(productObj.getCategory().getId());
-        Category categoryObj = categoryOpt.orElseThrow(() -> new EntityNotFoundException("Product ID " + productObj.getCategory().getId() + " not found."));
+        Optional<Product> productOpt = productRepository.findById(cartDTO.getProduct_id());
+        Product productObj = productOpt.orElseThrow(() -> new EntityNotFoundException("Product ID " + cartDTO.getProduct_id() + " not found."));
 
-        Optional<Discount> discountOpt = discountRepository.findById(discount_id);
-        Discount discountObj = discountOpt.orElseThrow(() -> new EntityNotFoundException("Discount ID " + discount_id + " not found."));
+        Optional<Discount> discountOpt = discountRepository.findById(cartDTO.getDiscount_id());
+        Discount discountObj = discountOpt.orElseThrow(() -> new EntityNotFoundException("Discount ID " + cartDTO.getDiscount_id() + " not found."));
 
-        Optional<User> userOpt = userRepository.findById(user_id);
-        User userObj = userOpt.orElseThrow(() -> new EntityNotFoundException("User ID " + user_id + " not found."));
+        Optional<User> userOpt = userRepository.findById(cartDTO.getUser_id());
+        User userObj = userOpt.orElseThrow(() -> new EntityNotFoundException("User ID " + cartDTO.getUser_id() + " not found."));
 
 
         BigDecimal discountedPrice = new BigDecimal(discountObj.getDiscountValue());
@@ -170,6 +168,9 @@ public class CartServiceImpl implements CartService {
             discountedPrice = discountedPrice.subtract(discountAmount.multiply(DiscountConstants.SEASONAL_CAMPAIGN));
         }
 
-        return Optional.empty();
+        cartRequestParam.putBigDecimal("Price", discountedPrice);
+
+        return cartRequestParam;
     }
+
 }
